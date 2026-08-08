@@ -1,32 +1,61 @@
 {% extends "base.html" %}
 
-{% block content %}
-<section class="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
-  <aside class="card h-fit border border-base-300 bg-base-100 shadow-sm xl:sticky xl:top-24">
-    <form id="filters-form" action="/locations" method="get" class="card-body gap-4 p-4 sm:p-6">
+{% block filters %}
+<section class="card border border-base-300 bg-base-100 shadow-xl shadow-black/5" aria-labelledby="filter-heading">
+  <form id="filters-form" action="/locations" method="get" class="card-body gap-5 p-5 lg:p-6">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 class="card-title">Search and filters</h2>
-        <p class="mt-1 text-sm text-base-content/60">Submitting or changing a filter navigates to a complete HTML document.</p>
+        <h2 id="filter-heading" class="flex items-center gap-2 text-xl font-bold"><svg class="app-icon text-primary" aria-hidden="true"><use href="/static/icons/solid.svg#sliders"></use></svg>Find a location</h2>
+        <p id="filter-help" class="mt-1 text-sm leading-6 text-base-content/60">Search and filter selections preserve their values in the URL and return a complete HTML document.</p>
       </div>
-      <label class="form-control w-full"><span class="label-text mb-2 font-semibold">Search every hierarchy level</span>
-        <div class="join w-full">
-          <input class="input input-bordered join-item min-w-0 flex-1" type="search" name="query" value="{{ view.query.query }}" placeholder="Try Kigali…">
-          <button class="btn btn-primary join-item" type="submit">Search</button>
+      <a href="/traditional" class="btn btn-outline btn-sm gap-2 self-start"><svg class="app-icon size-3.5" aria-hidden="true"><use href="/static/icons/solid.svg#xmark"></use></svg>Clear filters</a>
+    </header>
+
+    <label class="form-control w-full">
+      <span class="label-text mb-2 text-sm font-semibold">Search all location levels</span>
+      <div class="join w-full">
+        <div class="relative min-w-0 flex-1">
+          <svg class="app-icon pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-base-content/40" aria-hidden="true"><use href="/static/icons/solid.svg#magnifying-glass"></use></svg>
+          <input id="search-input" class="input input-bordered input-lg join-item w-full rounded-r-none pl-11 text-base" type="search" name="query" value="{{ view.query.query }}" placeholder="Search a province, district, sector, cell, or village" aria-describedby="filter-help">
         </div>
-      </label>
-      <div class="divider my-0 text-xs text-base-content/45">FULL-PAGE CASCADE</div>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Province</span><select id="province" data-level="provinces" class="select select-bordered" name="province" onchange="resetCascade(['district','sector','cell','village']); this.form.submit()"><option value="">All provinces</option>{% for option in view.provinces %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">District</span><select id="district" data-level="districts" class="select select-bordered" name="district" onchange="resetCascade(['sector','cell','village']); this.form.submit()"><option value="">All districts</option>{% for option in view.districts %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Sector</span><select id="sector" data-level="sectors" class="select select-bordered" name="sector" onchange="resetCascade(['cell','village']); this.form.submit()"><option value="">All sectors</option>{% for option in view.sectors %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Cell</span><select id="cell" data-level="cells" class="select select-bordered" name="cell" onchange="resetCascade(['village']); this.form.submit()"><option value="">All cells</option>{% for option in view.cells %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Village</span><select id="village" data-level="villages" class="select select-bordered" name="village" onchange="this.form.submit()"><option value="">All villages</option>{% for option in view.villages %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
-      <div class="divider my-0 text-xs text-base-content/45">TEST CONTROL</div>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Simulated delay (ms)</span><input class="input input-bordered" type="number" name="delay_ms" min="0" max="10000" value="{{ view.query.delay_ms }}"></label>
-      <input type="hidden" name="per_page" value="{{ view.query.per_page }}">
-      <button class="btn btn-secondary" type="submit">Apply with full reload</button>
-      <a href="/traditional" class="btn btn-ghost btn-sm">Clear all filters</a>
-    </form>
-  </aside>
-  <div id="results" class="min-w-0">{{ view.results_html|safe }}</div>
+        <button class="btn btn-primary join-item min-h-12 px-5" type="submit">Search</button>
+      </div>
+    </label>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Province</span><select id="province" data-level="provinces" class="select select-bordered w-full text-base" name="province" onchange="resetCascade(['district','sector','cell','village']); this.form.requestSubmit()"><option value="">All provinces</option>{% for option in view.provinces %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">District</span><select id="district" data-level="districts" class="select select-bordered w-full text-base" name="district" onchange="resetCascade(['sector','cell','village']); this.form.requestSubmit()"><option value="">All districts</option>{% for option in view.districts %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Sector</span><select id="sector" data-level="sectors" class="select select-bordered w-full text-base" name="sector" onchange="resetCascade(['cell','village']); this.form.requestSubmit()"><option value="">All sectors</option>{% for option in view.sectors %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Cell</span><select id="cell" data-level="cells" class="select select-bordered w-full text-base" name="cell" onchange="resetCascade(['village']); this.form.requestSubmit()"><option value="">All cells</option>{% for option in view.cells %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Village</span><select id="village" data-level="villages" class="select select-bordered w-full text-base" name="village" onchange="this.form.requestSubmit()"><option value="">All villages</option>{% for option in view.villages %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}</select></label>
+    </div>
+
+    <div class="flex flex-col gap-4 border-t border-base-300 pt-4 lg:flex-row lg:items-start lg:justify-between">
+      <div id="active-filter-chips" data-use-htmx="false" class="flex min-h-9 flex-wrap items-center gap-2" aria-label="Active filters">
+        <span class="mr-1 text-xs font-bold uppercase tracking-wider text-base-content/45">Active</span>
+        {% if view.query.query != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 border-primary/30 bg-primary/10 text-primary" onclick="clearFilter('query', [], false)" aria-label="Remove search filter">Search: {{ view.query.query }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.province != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('province', ['district','sector','cell','village'], false)" aria-label="Remove province filter">{{ view.query.province }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.district != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('district', ['sector','cell','village'], false)" aria-label="Remove district filter">{{ view.query.district }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.sector != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('sector', ['cell','village'], false)" aria-label="Remove sector filter">{{ view.query.sector }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.cell != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('cell', ['village'], false)" aria-label="Remove cell filter">{{ view.query.cell }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.village != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('village', [], false)" aria-label="Remove village filter">{{ view.query.village }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.query == "" && view.query.province == "" && view.query.district == "" && view.query.sector == "" && view.query.cell == "" && view.query.village == "" %}<span data-active-filter class="text-sm text-base-content/45">No filters applied</span>{% endif %}
+      </div>
+
+      <details class="collapse-arrow collapse w-full shrink-0 border border-base-300 bg-base-200/40 lg:w-80">
+        <summary class="collapse-title min-h-11 py-3 text-sm font-semibold"><span class="inline-flex items-center gap-2"><svg class="app-icon text-base-content/45"><use href="/static/icons/solid.svg#clock"></use></svg>Performance test controls</span></summary>
+        <div class="collapse-content space-y-3 pb-4">
+          <label class="form-control"><span class="label-text mb-2 text-sm">Simulated server delay (ms)</span><input class="input input-bordered w-full" type="number" name="delay_ms" min="0" max="10000" value="{{ view.query.delay_ms }}"></label>
+          <button class="btn btn-primary btn-sm w-full" type="submit">Apply test delay</button>
+          <p class="text-xs leading-5 text-base-content/50">Adds up to 10 seconds of artificial server latency.</p>
+        </div>
+      </details>
+    </div>
+    <input type="hidden" name="per_page" value="{{ view.query.per_page }}">
+  </form>
 </section>
+{% endblock %}
+
+{% block results %}
+<div id="results" class="min-w-0 scroll-mt-24">{{ view.results_html|safe }}</div>
 {% endblock %}

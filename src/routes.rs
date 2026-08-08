@@ -20,10 +20,6 @@ struct SelectOption {
 struct ResultRow {
     id: String,
     breadcrumb: String,
-    province: String,
-    district: String,
-    sector: String,
-    cell: String,
     village: String,
     details_url: String,
 }
@@ -53,10 +49,15 @@ struct RecentMetricView {
 
 struct DashboardMetricsView {
     requests: u64,
-    average_duration_ms: String,
     average_response_size: String,
     htmx_average_duration_ms: String,
     traditional_average_duration_ms: String,
+    htmx_average_response_size: String,
+    traditional_average_response_size: String,
+    htmx_time_bar_width: String,
+    traditional_time_bar_width: String,
+    htmx_size_bar_width: String,
+    traditional_size_bar_width: String,
     recent: Vec<RecentMetricView>,
 }
 
@@ -323,10 +324,6 @@ fn results_view(page: SearchPage, query: &LocationQuery, is_htmx: bool) -> Resul
             ResultRow {
                 id: location.id,
                 breadcrumb: location.breadcrumb,
-                province: location.province,
-                district: location.district,
-                sector: location.sector,
-                cell: location.cell,
                 village: location.village,
                 details_url,
             }
@@ -375,14 +372,33 @@ fn select_options(values: Vec<String>, selected: &str) -> Vec<SelectOption> {
 
 fn metrics_view(snapshot: MetricsSnapshot) -> DashboardMetricsView {
     let aggregate = snapshot.aggregate;
+    let max_time = aggregate
+        .htmx_average_duration_ms
+        .max(aggregate.traditional_average_duration_ms);
+    let max_size = aggregate
+        .htmx_average_response_size_bytes
+        .max(aggregate.traditional_average_response_size_bytes);
     DashboardMetricsView {
         requests: aggregate.requests,
-        average_duration_ms: format!("{:.2} ms", aggregate.average_duration_ms),
         average_response_size: format_bytes(aggregate.average_response_size_bytes),
         htmx_average_duration_ms: format!("{:.2} ms", aggregate.htmx_average_duration_ms),
         traditional_average_duration_ms: format!(
             "{:.2} ms",
             aggregate.traditional_average_duration_ms
+        ),
+        htmx_average_response_size: format_bytes(aggregate.htmx_average_response_size_bytes),
+        traditional_average_response_size: format_bytes(
+            aggregate.traditional_average_response_size_bytes,
+        ),
+        htmx_time_bar_width: comparison_width(aggregate.htmx_average_duration_ms, max_time),
+        traditional_time_bar_width: comparison_width(
+            aggregate.traditional_average_duration_ms,
+            max_time,
+        ),
+        htmx_size_bar_width: comparison_width(aggregate.htmx_average_response_size_bytes, max_size),
+        traditional_size_bar_width: comparison_width(
+            aggregate.traditional_average_response_size_bytes,
+            max_size,
         ),
         recent: snapshot
             .recent
@@ -393,17 +409,35 @@ fn metrics_view(snapshot: MetricsSnapshot) -> DashboardMetricsView {
 }
 
 fn recent_metric_view(record: PerformanceRecord) -> RecentMetricView {
+    let timestamp = record
+        .timestamp
+        .get(11..19)
+        .unwrap_or(&record.timestamp)
+        .to_owned();
     RecentMetricView {
-        timestamp: record.timestamp,
+        timestamp,
         method: record.method,
         path: record.path,
         status: record.status,
-        mode: if record.is_htmx { "HTMX" } else { "Full" }.to_owned(),
+        mode: if record.is_htmx {
+            "HTMX"
+        } else {
+            "Traditional"
+        }
+        .to_owned(),
         duration_ms: format!("{:.2} ms", record.duration_ms),
         response_size: record
             .response_size_bytes
             .map(|bytes| format_bytes(bytes as f64))
             .unwrap_or_else(|| "streamed".to_owned()),
+    }
+}
+
+fn comparison_width(value: f64, maximum: f64) -> String {
+    if maximum <= 0.0 {
+        "0".to_owned()
+    } else {
+        format!("{:.1}", (value / maximum * 100.0).clamp(4.0, 100.0))
     }
 }
 
