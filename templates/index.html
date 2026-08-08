@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
+  <aside class="card h-fit border border-base-300 bg-base-100 shadow-sm xl:sticky xl:top-24">
+    <form id="filters-form" class="card-body gap-4 p-4 sm:p-6" autocomplete="off">
+      <div>
+        <h2 class="card-title">Search and filters</h2>
+        <p class="mt-1 text-sm text-base-content/60">Each interaction requests only the section that changes.</p>
+      </div>
+
+      <label class="form-control w-full">
+        <span class="label-text mb-2 font-semibold">Search every hierarchy level</span>
+        <input id="search-input" class="input input-bordered w-full" type="search" name="query" value="{{ view.query.query }}" placeholder="Try Kigali, Gitega, Gihanga…"
+          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form"
+          hx-trigger="keyup changed delay:300ms, filtersChanged from:body" hx-indicator="#global-indicator">
+      </label>
+
+      <div class="divider my-0 text-xs text-base-content/45">CASCADE</div>
+
+      <label class="form-control"><span class="label-text mb-2 font-semibold">Province</span>
+        <select id="province" data-level="provinces" class="select select-bordered w-full" name="province"
+          hx-get="/fragments/districts" hx-target="#district" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
+          onchange="resetCascade(['district','sector','cell','village'])">
+          <option value="">All provinces</option>{% for option in view.provinces %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-control"><span class="label-text mb-2 font-semibold">District</span>
+        <select id="district" data-level="districts" class="select select-bordered w-full" name="district"
+          hx-get="/fragments/sectors" hx-target="#sector" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
+          onchange="resetCascade(['sector','cell','village'])">
+          <option value="">All districts</option>{% for option in view.districts %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-control"><span class="label-text mb-2 font-semibold">Sector</span>
+        <select id="sector" data-level="sectors" class="select select-bordered w-full" name="sector"
+          hx-get="/fragments/cells" hx-target="#cell" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
+          onchange="resetCascade(['cell','village'])">
+          <option value="">All sectors</option>{% for option in view.sectors %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-control"><span class="label-text mb-2 font-semibold">Cell</span>
+        <select id="cell" data-level="cells" class="select select-bordered w-full" name="cell"
+          hx-get="/fragments/villages" hx-target="#village" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
+          onchange="resetCascade(['village'])">
+          <option value="">All cells</option>{% for option in view.cells %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="form-control"><span class="label-text mb-2 font-semibold">Village</span>
+        <select id="village" data-level="villages" class="select select-bordered w-full" name="village"
+          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-trigger="change" hx-indicator="#global-indicator">
+          <option value="">All villages</option>{% for option in view.villages %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
+        </select>
+      </label>
+
+      <div class="divider my-0 text-xs text-base-content/45">TEST CONTROL</div>
+      <label class="form-control"><span class="label-text mb-2 font-semibold">Simulated delay (ms)</span>
+        <input class="input input-bordered" type="number" name="delay_ms" min="0" max="10000" value="{{ view.query.delay_ms }}"
+          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-trigger="change" hx-indicator="#global-indicator">
+      </label>
+      <input type="hidden" name="per_page" value="{{ view.query.per_page }}">
+      <a href="/" class="btn btn-ghost btn-sm">Clear all filters</a>
+    </form>
+  </aside>
+
+  <div id="results" class="min-w-0" aria-live="polite">{{ view.results_html|safe }}</div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,36 @@
+@config "../tailwind.config.js";
+@import "tailwindcss";
+@source "../templates";
+@source "../src";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-base-200 text-base-content antialiased;
+  }
+}
+
+@layer components {
+  .metric-value {
+    @apply font-mono text-sm font-semibold tabular-nums;
+  }
+
+  .htmx-indicator {
+    @apply opacity-0 transition-opacity;
+  }
+
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    @apply opacity-100;
+  }
+
+  .htmx-request #results-table {
+    @apply opacity-50;
+  }
+}

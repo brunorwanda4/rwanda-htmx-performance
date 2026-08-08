@@ -1,0 +1,15 @@
+{
+  "name": "rwanda-htmx-performance",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "css:build": "bunx @tailwindcss/cli -i ./assets/input.css -o ./static/app.css --minify",
+    "css:watch": "bunx @tailwindcss/cli -i ./assets/input.css -o ./static/app.css --watch",
+    "dev": "bun run css:watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "latest",
+    "daisyui": "latest",
+    "tailwindcss": "latest"
+  }
+}

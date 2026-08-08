@@ -1,0 +1,50 @@
+<section class="card border border-base-300 bg-base-100 shadow-sm">
+  <div class="card-body gap-4 p-0">
+    <div class="flex flex-col justify-between gap-3 border-b border-base-300 p-4 sm:flex-row sm:items-center sm:p-6">
+      <div>
+        <h2 class="card-title">Matching villages</h2>
+        <p class="text-sm text-base-content/60">Full Province → District → Sector → Cell → Village breadcrumbs</p>
+      </div>
+      <div class="flex items-center gap-2"><span class="badge badge-lg badge-primary">{{ view.total }} results</span><span class="badge badge-lg badge-ghost">Page {{ view.page }} / {{ view.total_pages }}</span></div>
+    </div>
+
+    {% if view.total == 0 %}
+      <div class="p-6"><div class="alert alert-warning"><span>No locations matched the current search and filters.</span></div></div>
+    {% else %}
+      <div id="results-table" class="overflow-x-auto transition-opacity">
+        <table class="table table-zebra">
+          <thead><tr><th>Location breadcrumb</th><th class="hidden lg:table-cell">Levels</th><th class="text-right">Details</th></tr></thead>
+          <tbody>
+          {% for row in view.rows %}
+            <tr class="hover:bg-base-200">
+              <td><div class="max-w-3xl font-semibold leading-relaxed">{{ row.breadcrumb }}</div><div class="mt-1 font-mono text-xs text-base-content/45">{{ row.id }}</div></td>
+              <td class="hidden lg:table-cell"><div class="flex max-w-sm flex-wrap gap-1"><span class="badge badge-outline badge-sm">{{ row.province }}</span><span class="badge badge-outline badge-sm">{{ row.district }}</span><span class="badge badge-outline badge-sm">{{ row.sector }}</span><span class="badge badge-outline badge-sm">{{ row.cell }}</span><span class="badge badge-primary badge-sm">{{ row.village }}</span></div></td>
+              <td class="text-right">
+                {% if is_htmx %}
+                  <button class="btn btn-primary btn-sm" hx-get="{{ row.details_url }}" hx-target="#location-modal-content" hx-swap="innerHTML" hx-indicator="#global-indicator" hx-on::after-request="document.getElementById('location-modal').showModal()">Inspect</button>
+                {% else %}
+                  <a class="btn btn-secondary btn-sm" href="{{ row.details_url }}">Inspect</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex flex-col items-center justify-between gap-3 border-t border-base-300 p-4 sm:flex-row sm:px-6">
+        <span class="text-sm text-base-content/60">Page {{ view.page }} of {{ view.total_pages }}</span>
+        <nav class="join" aria-label="Pagination">
+          {% if view.has_previous %}
+            {% if is_htmx %}<button class="btn join-item btn-sm" hx-get="/fragments/locations?page={{ view.previous_page }}" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator">« Previous</button>{% else %}<a class="btn join-item btn-sm" href="{{ view.previous_url }}">« Previous</a>{% endif %}
+          {% else %}<button class="btn join-item btn-sm" disabled>« Previous</button>{% endif %}
+          <button class="btn join-item btn-sm btn-active" aria-current="page">{{ view.page }}</button>
+          {% if view.has_next %}
+            {% if is_htmx %}<button class="btn join-item btn-sm" hx-get="/fragments/locations?page={{ view.next_page }}" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator">Next »</button>{% else %}<a class="btn join-item btn-sm" href="{{ view.next_url }}">Next »</a>{% endif %}
+          {% else %}<button class="btn join-item btn-sm" disabled>Next »</button>{% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  </div>
+</section>
+

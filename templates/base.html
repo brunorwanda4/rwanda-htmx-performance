@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compare HTMX fragment updates with traditional full-page Actix Web responses.">
+  <title>{{ view.title }}</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem("rwanda-theme");
+      const preferred = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.dataset.theme = saved || preferred;
+    })();
+  </script>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+</head>
+<body>
+  <div class="min-h-screen">
+    <header class="navbar sticky top-0 z-40 border-b border-base-300 bg-base-100/95 px-4 shadow-sm backdrop-blur lg:px-8">
+      <div class="navbar-start min-w-0">
+        <a class="btn btn-ghost min-w-0 gap-3 px-2 text-left" href="/">
+          <span class="grid size-9 shrink-0 place-items-center rounded-box bg-primary text-lg font-black text-primary-content">RW</span>
+          <span class="hidden truncate font-bold sm:block">Rwanda Locations Explorer</span>
+        </a>
+      </div>
+      <nav class="navbar-center hidden gap-2 md:flex" aria-label="Performance modes">
+        <a class="btn btn-sm {% if view.active_mode == "htmx" %}btn-primary{% else %}btn-ghost{% endif %}" href="/">
+          HTMX Mode
+        </a>
+        <a class="btn btn-sm {% if view.active_mode == "traditional" %}btn-secondary{% else %}btn-ghost{% endif %}" href="/traditional">
+          Traditional Mode
+        </a>
+      </nav>
+      <div class="navbar-end gap-2">
+        <span id="global-indicator" class="loading loading-spinner loading-sm htmx-indicator text-primary" aria-label="Loading"></span>
+        <label class="swap swap-rotate btn btn-ghost btn-circle" aria-label="Toggle light and dark theme">
+          <input id="theme-toggle" type="checkbox" class="theme-controller" value="dark">
+          <svg class="swap-off size-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64 17.66l-1.41 1.41 1.7 1.7 1.41-1.41-1.7-1.7M11 22h2v-3h-2v3m1-18a8 8 0 100 16 8 8 0 000-16m8 7v2h3v-2h-3M4 11H1v2h3v-2m12.66 8.36l1.41 1.41 1.7-1.7-1.41-1.41-1.7 1.7M19.36 6.34l1.41-1.41-1.7-1.7-1.41 1.41 1.7 1.7M13 2V0h-2v2h2M6.34 4.64L4.93 3.23l-1.7 1.7 1.41 1.41 1.7-1.7z"/></svg>
+          <svg class="swap-on size-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64 13a9 9 0 01-10.63-10.64A9 9 0 1021.64 13z"/></svg>
+        </label>
+      </div>
+    </header>
+
+    <div class="border-b border-base-300 bg-base-100 px-4 py-3 md:hidden">
+      <div class="join flex w-full">
+        <a class="btn join-item btn-sm flex-1 {% if view.active_mode == "htmx" %}btn-primary{% endif %}" href="/">HTMX Mode</a>
+        <a class="btn join-item btn-sm flex-1 {% if view.active_mode == "traditional" %}btn-secondary{% endif %}" href="/traditional">Traditional Mode</a>
+      </div>
+    </div>
+
+    <main class="mx-auto w-full max-w-screen-2xl space-y-6 p-4 lg:p-8">
+      <section class="flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
+        <div>
+          <div class="mb-2 flex flex-wrap items-center gap-2">
+            <span class="badge badge-primary badge-outline">Actix Web</span>
+            <span class="badge badge-secondary badge-outline">Askama</span>
+            <span class="badge badge-accent badge-outline">HTMX benchmark</span>
+          </div>
+          <h1 class="text-2xl font-black tracking-tight sm:text-3xl">Rwanda location performance lab</h1>
+          <p class="mt-1 max-w-3xl text-sm text-base-content/65">One dataset and one filtering engine, rendered as targeted fragments or complete HTML documents.</p>
+        </div>
+        <div class="alert alert-info w-auto py-2 text-sm">
+          <span class="font-semibold">Active: {% if view.active_mode == "htmx" %}HTMX partial updates{% else %}traditional page reloads{% endif %}</span>
+        </div>
+      </section>
+
+      <section class="stats stats-vertical w-full border border-base-300 bg-base-100 shadow-sm sm:grid sm:grid-cols-2 lg:grid-cols-5" aria-label="Dataset statistics">
+        <div class="stat"><div class="stat-title">Provinces</div><div class="stat-value text-primary">{{ view.counts.provinces }}</div><div class="stat-desc">Top-level regions</div></div>
+        <div class="stat"><div class="stat-title">Districts</div><div class="stat-value text-secondary">{{ view.counts.districts }}</div><div class="stat-desc">Across Rwanda</div></div>
+        <div class="stat"><div class="stat-title">Sectors</div><div class="stat-value text-accent">{{ view.counts.sectors }}</div><div class="stat-desc">Administrative sectors</div></div>
+        <div class="stat"><div class="stat-title">Cells</div><div class="stat-value">{{ view.counts.cells }}</div><div class="stat-desc">Local cells</div></div>
+        <div class="stat"><div class="stat-title">Villages</div><div class="stat-value">{{ view.counts.villages }}</div><div class="stat-desc">Searchable leaf records</div></div>
+      </section>
+
+      {% block content %}{% endblock %}
+
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="card-body gap-4 p-4 sm:p-6">
+          <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 class="card-title">Recent server performance</h2>
+              <p class="text-sm text-base-content/60">In-memory measurements captured by Actix middleware. Refresh this page to update the summary.</p>
+            </div>
+            <a class="btn btn-outline btn-sm" href="/metrics" target="_blank">Open metrics JSON</a>
+          </div>
+          <div class="stats stats-vertical border border-base-300 bg-base-200 lg:stats-horizontal">
+            <div class="stat py-3"><div class="stat-title">Recorded requests</div><div class="stat-value text-2xl">{{ view.metrics.requests }}</div></div>
+            <div class="stat py-3"><div class="stat-title">Overall server avg</div><div class="stat-value text-2xl">{{ view.metrics.average_duration_ms }}</div></div>
+            <div class="stat py-3"><div class="stat-title">HTMX server avg</div><div class="stat-value text-2xl text-primary">{{ view.metrics.htmx_average_duration_ms }}</div></div>
+            <div class="stat py-3"><div class="stat-title">Full-page server avg</div><div class="stat-value text-2xl text-secondary">{{ view.metrics.traditional_average_duration_ms }}</div></div>
+            <div class="stat py-3"><div class="stat-title">Average response</div><div class="stat-value text-2xl">{{ view.metrics.average_response_size }}</div></div>
+          </div>
+          <div class="overflow-x-auto rounded-box border border-base-300">
+            <table class="table table-sm">
+              <thead><tr><th>Timestamp (UTC)</th><th>Mode</th><th>Request</th><th>Status</th><th>Server time</th><th>Response</th></tr></thead>
+              <tbody>
+              {% for record in view.metrics.recent %}
+                <tr class="hover:bg-base-200">
+                  <td class="whitespace-nowrap font-mono text-xs">{{ record.timestamp }}</td>
+                  <td><span class="badge {% if record.mode == "HTMX" %}badge-primary{% else %}badge-secondary{% endif %} badge-sm">{{ record.mode }}</span></td>
+                  <td class="max-w-md"><span class="font-mono text-xs">{{ record.method }} {{ record.path }}</span></td>
+                  <td>{{ record.status }}</td>
+                  <td class="metric-value">{{ record.duration_ms }}</td>
+                  <td class="metric-value">{{ record.response_size }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="py-8 text-center text-base-content/55">No completed requests were available when this page started rendering.</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="location-modal" class="modal">
+    <div id="location-modal-content" class="modal-box max-w-2xl border border-base-300 p-0">
+      {% if view.show_detail %}{{ view.detail_html|safe }}{% else %}<div class="p-8 text-center"><span class="loading loading-spinner loading-lg text-primary"></span></div>{% endif %}
+    </div>
+    <form method="dialog" class="modal-backdrop"><button aria-label="Close location details">close</button></form>
+  </dialog>
+
+  <script>
+    const root = document.documentElement;
+    const themeToggle = document.getElementById("theme-toggle");
+    themeToggle.checked = root.dataset.theme === "dark";
+    themeToggle.addEventListener("change", () => {
+      const theme = themeToggle.checked ? "dark" : "light";
+      root.dataset.theme = theme;
+      localStorage.setItem("rwanda-theme", theme);
+    });
+
+    function resetCascade(ids) {
+      ids.forEach((id) => {
+        const select = document.getElementById(id);
+        if (select) select.innerHTML = `<option value="">All ${select.dataset.level}</option>`;
+      });
+    }
+  </script>
+  {% if view.show_detail %}<script>document.getElementById("location-modal").showModal();</script>{% endif %}
+</body>
+</html>
+
