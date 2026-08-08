@@ -16,6 +16,7 @@ No database, SPA framework, or client-side rendering framework is used. Bun is o
 - Askama server-rendered templates
 - HTMX for targeted HTML swaps
 - Tailwind CSS 4 and DaisyUI 5, installed with Bun using the [official DaisyUI HTMX setup](https://daisyui.com/docs/install/htmx/)
+- Font Awesome Free SVG sprite icons, installed with Bun
 - `serde` and `serde_json` for the startup-only dataset load
 - `tracing` and `tracing-subscriber` for JSON performance logs
 - In-memory request records and aggregates

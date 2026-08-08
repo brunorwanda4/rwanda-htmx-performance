@@ -5,9 +5,10 @@
   "scripts": {
     "css:build": "bunx @tailwindcss/cli -i ./assets/input.css -o ./static/app.css --minify",
     "css:watch": "bunx @tailwindcss/cli -i ./assets/input.css -o ./static/app.css --watch",
-    "dev": "concurrently --kill-others-on-fail --names CSS,ACTIX --prefix-colors cyan,green \"bun run css:watch\" \"cargo run\""
+    "dev": "node init && concurrently --kill-others-on-fail --names CSS,ACTIX --prefix-colors cyan,green \"bun run css:watch\" \"cargo run\""
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^7.3.1",
     "@tailwindcss/cli": "latest",
     "concurrently": "latest",
     "daisyui": "latest",

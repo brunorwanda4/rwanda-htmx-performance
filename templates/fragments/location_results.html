@@ -1,50 +1,72 @@
-<section class="card border border-base-300 bg-base-100 shadow-sm">
-  <div class="card-body gap-4 p-0">
-    <div class="flex flex-col justify-between gap-3 border-b border-base-300 p-4 sm:flex-row sm:items-center sm:p-6">
-      <div>
-        <h2 class="card-title">Matching villages</h2>
-        <p class="text-sm text-base-content/60">Full Province → District → Sector → Cell → Village breadcrumbs</p>
+<div id="results-loading" class="htmx-indicator rounded-2xl border border-base-300 bg-base-100 p-5 shadow-xl shadow-black/5" role="status" aria-live="polite">
+  <span class="sr-only">Updating location results</span>
+  <div class="mb-5 flex items-center justify-between"><div class="skeleton h-7 w-48"></div><div class="skeleton h-8 w-28 rounded-full"></div></div>
+  <div class="space-y-3">{% for _ in 0..5 %}<div class="flex items-center gap-4 rounded-xl border border-base-300 p-4"><div class="skeleton size-10 shrink-0 rounded-lg"></div><div class="flex-1 space-y-2"><div class="skeleton h-5 w-40"></div><div class="skeleton h-3 w-3/4"></div></div><div class="skeleton h-9 w-28 rounded-lg"></div></div>{% endfor %}</div>
+</div>
+
+<section id="results-content" class="overflow-hidden rounded-2xl border border-base-300 bg-base-100 shadow-xl shadow-black/5" aria-labelledby="results-heading">
+  <header class="flex flex-col gap-4 border-b border-base-300 p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
+    <div>
+      <p class="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary">Location directory</p>
+      <h2 id="results-heading" class="text-xl font-bold sm:text-2xl">Matching villages</h2>
+      <p class="mt-1 text-sm text-base-content/55">Select a village to inspect its hierarchy and nearby locations.</p>
+    </div>
+    <div class="flex items-center gap-3 self-start sm:self-auto">
+      <div><span class="text-3xl font-black tabular-nums text-primary">{{ view.total }}</span><span class="ml-2 text-sm font-medium text-base-content/55">results</span></div>
+      <span class="h-8 w-px bg-base-300"></span>
+      <span class="text-sm font-semibold text-base-content/65">Page {{ view.page }} of {{ view.total_pages }}</span>
+    </div>
+  </header>
+
+  {% if view.total == 0 %}
+    <div class="grid min-h-80 place-items-center p-6 text-center">
+      <div class="max-w-md">
+        <span class="mx-auto grid size-16 place-items-center rounded-2xl bg-base-200 text-base-content/35"><svg class="app-icon size-7" aria-hidden="true"><use href="/static/icons/solid.svg#magnifying-glass"></use></svg></span>
+        <h3 class="mt-5 text-xl font-bold">No locations found</h3>
+        <p class="mt-2 leading-7 text-base-content/55">Try a broader search term or remove one of the hierarchy filters.</p>
+        <a class="btn btn-primary btn-outline mt-5" href="{% if is_htmx %}/{% else %}/traditional{% endif %}">Clear all filters</a>
       </div>
-      <div class="flex items-center gap-2"><span class="badge badge-lg badge-primary">{{ view.total }} results</span><span class="badge badge-lg badge-ghost">Page {{ view.page }} / {{ view.total_pages }}</span></div>
+    </div>
+  {% else %}
+    <div class="overflow-x-auto">
+      <table class="table table-lg max-md:block">
+        <thead class="max-md:hidden"><tr><th class="w-64">Village</th><th>Administrative path</th><th class="w-40 text-right">Action</th></tr></thead>
+        <tbody class="max-md:block max-md:divide-y max-md:divide-base-300">
+        {% for row in view.rows %}
+          <tr class="group border-base-300 transition-colors hover:bg-base-200/70 max-md:block max-md:p-5">
+            <td class="max-md:block max-md:p-0">
+              <div class="flex items-center gap-3">
+                <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-content"><svg class="app-icon" aria-hidden="true"><use href="/static/icons/solid.svg#location-dot"></use></svg></span>
+                <div><p class="text-base font-bold">{{ row.village }}</p><p class="mt-0.5 font-mono text-xs text-base-content/40">{{ row.id }}</p></div>
+              </div>
+            </td>
+            <td class="max-md:block max-md:px-0 max-md:py-4">
+              <div class="flex items-start gap-2 text-sm leading-6 text-base-content/60"><svg class="app-icon mt-1 text-base-content/35" aria-hidden="true"><use href="/static/icons/solid.svg#route"></use></svg><span>{{ row.breadcrumb }}</span></div>
+            </td>
+            <td class="text-right max-md:block max-md:p-0">
+              {% if is_htmx %}
+                <button class="btn btn-primary btn-outline min-h-10 gap-2 max-md:w-full" hx-get="{{ row.details_url }}" hx-target="#location-modal-content" hx-swap="innerHTML" hx-indicator="#global-indicator" hx-on::after-request="document.getElementById('location-modal').showModal()"><span>View details</span><svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-right"></use></svg></button>
+              {% else %}
+                <a class="btn min-h-10 gap-2 border-pink-400/40 bg-pink-400/5 text-pink-300 hover:border-pink-400 hover:bg-pink-400 hover:text-white max-md:w-full" href="{{ row.details_url }}"><span>View details</span><svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-right"></use></svg></a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    {% if view.total == 0 %}
-      <div class="p-6"><div class="alert alert-warning"><span>No locations matched the current search and filters.</span></div></div>
-    {% else %}
-      <div id="results-table" class="overflow-x-auto transition-opacity">
-        <table class="table table-zebra">
-          <thead><tr><th>Location breadcrumb</th><th class="hidden lg:table-cell">Levels</th><th class="text-right">Details</th></tr></thead>
-          <tbody>
-          {% for row in view.rows %}
-            <tr class="hover:bg-base-200">
-              <td><div class="max-w-3xl font-semibold leading-relaxed">{{ row.breadcrumb }}</div><div class="mt-1 font-mono text-xs text-base-content/45">{{ row.id }}</div></td>
-              <td class="hidden lg:table-cell"><div class="flex max-w-sm flex-wrap gap-1"><span class="badge badge-outline badge-sm">{{ row.province }}</span><span class="badge badge-outline badge-sm">{{ row.district }}</span><span class="badge badge-outline badge-sm">{{ row.sector }}</span><span class="badge badge-outline badge-sm">{{ row.cell }}</span><span class="badge badge-primary badge-sm">{{ row.village }}</span></div></td>
-              <td class="text-right">
-                {% if is_htmx %}
-                  <button class="btn btn-primary btn-sm" hx-get="{{ row.details_url }}" hx-target="#location-modal-content" hx-swap="innerHTML" hx-indicator="#global-indicator" hx-on::after-request="document.getElementById('location-modal').showModal()">Inspect</button>
-                {% else %}
-                  <a class="btn btn-secondary btn-sm" href="{{ row.details_url }}">Inspect</a>
-                {% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="flex flex-col items-center justify-between gap-3 border-t border-base-300 p-4 sm:flex-row sm:px-6">
-        <span class="text-sm text-base-content/60">Page {{ view.page }} of {{ view.total_pages }}</span>
-        <nav class="join" aria-label="Pagination">
-          {% if view.has_previous %}
-            {% if is_htmx %}<button class="btn join-item btn-sm" hx-get="/fragments/locations?page={{ view.previous_page }}" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator">« Previous</button>{% else %}<a class="btn join-item btn-sm" href="{{ view.previous_url }}">« Previous</a>{% endif %}
-          {% else %}<button class="btn join-item btn-sm" disabled>« Previous</button>{% endif %}
-          <button class="btn join-item btn-sm btn-active" aria-current="page">{{ view.page }}</button>
-          {% if view.has_next %}
-            {% if is_htmx %}<button class="btn join-item btn-sm" hx-get="/fragments/locations?page={{ view.next_page }}" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator">Next »</button>{% else %}<a class="btn join-item btn-sm" href="{{ view.next_url }}">Next »</a>{% endif %}
-          {% else %}<button class="btn join-item btn-sm" disabled>Next »</button>{% endif %}
-        </nav>
-      </div>
-    {% endif %}
-  </div>
+    <footer class="flex flex-col gap-4 border-t border-base-300 bg-base-200/30 p-5 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+      <p class="text-sm text-base-content/55">Showing page <strong class="text-base-content">{{ view.page }}</strong> of <strong class="text-base-content">{{ view.total_pages }}</strong></p>
+      <nav class="join" aria-label="Location result pages">
+        {% if view.has_previous %}
+          {% if is_htmx %}<button class="btn join-item min-h-11 gap-2" hx-get="/fragments/locations?page={{ view.previous_page }}" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator,#results-loading"><svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-left"></use></svg>Previous</button>{% else %}<a class="btn join-item min-h-11 gap-2" href="{{ view.previous_url }}"><svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-left"></use></svg>Previous</a>{% endif %}
+        {% else %}<button class="btn join-item min-h-11 gap-2" disabled aria-disabled="true"><svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-left"></use></svg>Previous</button>{% endif %}
+        <span class="btn btn-primary join-item min-h-11 min-w-12 pointer-events-none" aria-current="page">{{ view.page }}</span>
+        {% if view.has_next %}
+          {% if is_htmx %}<button class="btn join-item min-h-11 gap-2" hx-get="/fragments/locations?page={{ view.next_page }}" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator,#results-loading">Next<svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-right"></use></svg></button>{% else %}<a class="btn join-item min-h-11 gap-2" href="{{ view.next_url }}">Next<svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-right"></use></svg></a>{% endif %}
+        {% else %}<button class="btn join-item min-h-11 gap-2" disabled aria-disabled="true">Next<svg class="app-icon size-3.5"><use href="/static/icons/solid.svg#chevron-right"></use></svg></button>{% endif %}
+      </nav>
+    </footer>
+  {% endif %}
 </section>
-

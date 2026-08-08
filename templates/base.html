@@ -1,15 +1,13 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Compare HTMX fragment updates with traditional full-page Actix Web responses.">
+  <meta name="description" content="Explore Rwanda locations and compare HTMX fragment updates with traditional Actix Web responses.">
   <title>{{ view.title }}</title>
   <script>
     (() => {
-      const saved = localStorage.getItem("rwanda-theme");
-      const preferred = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      document.documentElement.dataset.theme = saved || preferred;
+      document.documentElement.dataset.theme = localStorage.getItem("rwanda-theme") || "dark";
     })();
   </script>
   <link rel="stylesheet" href="/static/app.css">
@@ -17,117 +15,175 @@
 </head>
 <body>
   <div class="min-h-screen">
-    <header class="navbar sticky top-0 z-40 border-b border-base-300 bg-base-100/95 px-4 shadow-sm backdrop-blur lg:px-8">
-      <div class="navbar-start min-w-0">
-        <a class="btn btn-ghost min-w-0 gap-3 px-2 text-left" href="/">
-          <span class="grid size-9 shrink-0 place-items-center rounded-box bg-primary text-lg font-black text-primary-content">RW</span>
-          <span class="hidden truncate font-bold sm:block">Rwanda Locations Explorer</span>
-        </a>
+    <header class="sticky top-0 z-40 border-b border-base-300/80 bg-base-200/90 backdrop-blur-xl">
+      <div class="navbar mx-auto min-h-16 w-full max-w-screen-2xl gap-3 px-4 lg:px-8">
+        <div class="navbar-start min-w-0 flex-1">
+          <a class="group flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-primary" href="/" aria-label="Rwanda Locations Explorer home">
+            <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-content shadow-lg shadow-primary/20 transition-transform group-hover:-translate-y-0.5">
+              <svg class="app-icon size-5" aria-hidden="true"><use href="/static/icons/solid.svg#map-location-dot"></use></svg>
+            </span>
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-bold tracking-tight sm:text-base">Rwanda Locations Explorer</span>
+              <span class="hidden text-xs text-base-content/50 sm:block">Actix + HTMX performance lab</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="hidden items-center rounded-xl border border-base-300 bg-base-100/60 p-1 md:flex" aria-label="Rendering mode">
+          <a class="flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors {% if view.active_mode == "htmx" %}border border-base-300 bg-base-100 shadow-sm{% else %}text-base-content/55 hover:bg-base-100 hover:text-base-content{% endif %}" href="/" {% if view.active_mode == "htmx" %}aria-current="page"{% endif %}>
+            <span class="size-2 rounded-full bg-teal-400" aria-hidden="true"></span>
+            HTMX
+          </a>
+          <a class="flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors {% if view.active_mode == "traditional" %}border border-base-300 bg-base-100 shadow-sm{% else %}text-base-content/55 hover:bg-base-100 hover:text-base-content{% endif %}" href="/traditional" {% if view.active_mode == "traditional" %}aria-current="page"{% endif %}>
+            <span class="size-2 rounded-full bg-pink-400" aria-hidden="true"></span>
+            Traditional
+          </a>
+        </nav>
+
+        <div class="navbar-end w-auto gap-1 sm:gap-2">
+          <span id="global-indicator" class="loading loading-spinner loading-sm htmx-indicator text-primary" role="status" aria-label="Loading"></span>
+          <a class="btn btn-ghost btn-sm hidden gap-2 sm:inline-flex" href="#performance-dashboard">
+            <svg class="app-icon" aria-hidden="true"><use href="/static/icons/solid.svg#chart-line"></use></svg>
+            Metrics
+          </a>
+          <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm" aria-label="Toggle light and dark theme">
+            <input id="theme-toggle" type="checkbox" class="theme-controller" value="dark">
+            <svg class="app-icon swap-off size-4" aria-hidden="true"><use href="/static/icons/solid.svg#moon"></use></svg>
+            <svg class="app-icon swap-on size-4" aria-hidden="true"><use href="/static/icons/solid.svg#sun"></use></svg>
+          </label>
+        </div>
       </div>
-      <nav class="navbar-center hidden gap-2 md:flex" aria-label="Performance modes">
-        <a class="btn btn-sm {% if view.active_mode == "htmx" %}btn-primary{% else %}btn-ghost{% endif %}" href="/">
-          HTMX Mode
-        </a>
-        <a class="btn btn-sm {% if view.active_mode == "traditional" %}btn-secondary{% else %}btn-ghost{% endif %}" href="/traditional">
-          Traditional Mode
-        </a>
+      <nav class="mx-auto flex w-full max-w-screen-2xl border-t border-base-300/60 px-4 py-2 md:hidden" aria-label="Rendering mode">
+        <div class="join grid w-full grid-cols-2">
+          <a class="btn join-item btn-sm {% if view.active_mode == "htmx" %}bg-base-100 text-teal-400{% else %}btn-ghost{% endif %}" href="/"><span class="size-2 rounded-full bg-teal-400"></span>HTMX</a>
+          <a class="btn join-item btn-sm {% if view.active_mode == "traditional" %}bg-base-100 text-pink-400{% else %}btn-ghost{% endif %}" href="/traditional"><span class="size-2 rounded-full bg-pink-400"></span>Traditional</a>
+        </div>
       </nav>
-      <div class="navbar-end gap-2">
-        <span id="global-indicator" class="loading loading-spinner loading-sm htmx-indicator text-primary" aria-label="Loading"></span>
-        <label class="swap swap-rotate btn btn-ghost btn-circle" aria-label="Toggle light and dark theme">
-          <input id="theme-toggle" type="checkbox" class="theme-controller" value="dark">
-          <svg class="swap-off size-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64 17.66l-1.41 1.41 1.7 1.7 1.41-1.41-1.7-1.7M11 22h2v-3h-2v3m1-18a8 8 0 100 16 8 8 0 000-16m8 7v2h3v-2h-3M4 11H1v2h3v-2m12.66 8.36l1.41 1.41 1.7-1.7-1.41-1.41-1.7 1.7M19.36 6.34l1.41-1.41-1.7-1.7-1.41 1.41 1.7 1.7M13 2V0h-2v2h2M6.34 4.64L4.93 3.23l-1.7 1.7 1.41 1.41 1.7-1.7z"/></svg>
-          <svg class="swap-on size-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64 13a9 9 0 01-10.63-10.64A9 9 0 1021.64 13z"/></svg>
-        </label>
-      </div>
     </header>
 
-    <div class="border-b border-base-300 bg-base-100 px-4 py-3 md:hidden">
-      <div class="join flex w-full">
-        <a class="btn join-item btn-sm flex-1 {% if view.active_mode == "htmx" %}btn-primary{% endif %}" href="/">HTMX Mode</a>
-        <a class="btn join-item btn-sm flex-1 {% if view.active_mode == "traditional" %}btn-secondary{% endif %}" href="/traditional">Traditional Mode</a>
-      </div>
-    </div>
-
-    <main class="mx-auto w-full max-w-screen-2xl space-y-6 p-4 lg:p-8">
-      <section class="flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
-        <div>
-          <div class="mb-2 flex flex-wrap items-center gap-2">
-            <span class="badge badge-primary badge-outline">Actix Web</span>
-            <span class="badge badge-secondary badge-outline">Askama</span>
-            <span class="badge badge-accent badge-outline">HTMX benchmark</span>
+    <main class="mx-auto w-full max-w-screen-2xl space-y-8 px-4 py-7 lg:px-8 lg:py-10">
+      <section class="grid items-end gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(38rem,0.95fr)]" aria-labelledby="page-title">
+        <div class="max-w-3xl">
+          <p class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary sm:text-sm">
+            <svg class="app-icon" aria-hidden="true"><use href="/static/icons/solid.svg#gauge-high"></use></svg>
+            HTMX Performance Lab
+          </p>
+          <h1 id="page-title" class="text-3xl font-black leading-tight tracking-[-0.035em] text-base-content sm:text-4xl lg:text-5xl">Explore Rwanda locations, then measure the response.</h1>
+          <p class="mt-4 max-w-2xl text-base leading-7 text-base-content/65 sm:text-lg">Search Rwanda’s administrative hierarchy and compare targeted HTMX updates with traditional full-page navigation using the same Actix rendering pipeline.</p>
+          <div class="mt-5 inline-flex items-center gap-2 rounded-full border border-base-300 bg-base-100 px-3 py-1.5 text-sm font-medium">
+            <span class="size-2.5 rounded-full {% if view.active_mode == "htmx" %}bg-teal-400{% else %}bg-pink-400{% endif %}"></span>
+            {% if view.active_mode == "htmx" %}<span class="mode-htmx">HTMX partial updates active</span>{% else %}<span class="mode-traditional">Traditional page reloads active</span>{% endif %}
           </div>
-          <h1 class="text-2xl font-black tracking-tight sm:text-3xl">Rwanda location performance lab</h1>
-          <p class="mt-1 max-w-3xl text-sm text-base-content/65">One dataset and one filtering engine, rendered as targeted fragments or complete HTML documents.</p>
         </div>
-        <div class="alert alert-info w-auto py-2 text-sm">
-          <span class="font-semibold">Active: {% if view.active_mode == "htmx" %}HTMX partial updates{% else %}traditional page reloads{% endif %}</span>
+
+        <div class="stats stats-vertical w-full overflow-hidden border border-base-300 bg-base-100 shadow-lg shadow-black/5 sm:grid sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5" aria-label="Rwanda dataset totals">
+          <div class="stat min-w-0 px-4 py-4"><div class="stat-figure text-primary"><svg class="app-icon size-5"><use href="/static/icons/solid.svg#map-location-dot"></use></svg></div><div class="stat-title text-xs">Provinces</div><div class="stat-value text-2xl text-primary">{{ view.counts.provinces }}</div></div>
+          <div class="stat min-w-0 px-4 py-4"><div class="stat-figure text-base-content/35"><svg class="app-icon size-5"><use href="/static/icons/solid.svg#building"></use></svg></div><div class="stat-title text-xs">Districts</div><div class="stat-value text-2xl">{{ view.counts.districts }}</div></div>
+          <div class="stat min-w-0 px-4 py-4"><div class="stat-figure text-base-content/35"><svg class="app-icon size-5"><use href="/static/icons/solid.svg#layer-group"></use></svg></div><div class="stat-title text-xs">Sectors</div><div class="stat-value text-2xl">{{ view.counts.sectors }}</div></div>
+          <div class="stat min-w-0 px-4 py-4"><div class="stat-figure text-base-content/35"><svg class="app-icon size-5"><use href="/static/icons/solid.svg#table-cells-large"></use></svg></div><div class="stat-title text-xs">Cells</div><div class="stat-value text-2xl">{{ view.counts.cells }}</div></div>
+          <div class="stat min-w-0 px-4 py-4"><div class="stat-figure text-base-content/35"><svg class="app-icon size-5"><use href="/static/icons/solid.svg#house"></use></svg></div><div class="stat-title text-xs">Villages</div><div class="stat-value text-2xl">{{ view.counts.villages }}</div></div>
         </div>
       </section>
 
-      <section class="stats stats-vertical w-full border border-base-300 bg-base-100 shadow-sm sm:grid sm:grid-cols-2 lg:grid-cols-5" aria-label="Dataset statistics">
-        <div class="stat"><div class="stat-title">Provinces</div><div class="stat-value text-primary">{{ view.counts.provinces }}</div><div class="stat-desc">Top-level regions</div></div>
-        <div class="stat"><div class="stat-title">Districts</div><div class="stat-value text-secondary">{{ view.counts.districts }}</div><div class="stat-desc">Across Rwanda</div></div>
-        <div class="stat"><div class="stat-title">Sectors</div><div class="stat-value text-accent">{{ view.counts.sectors }}</div><div class="stat-desc">Administrative sectors</div></div>
-        <div class="stat"><div class="stat-title">Cells</div><div class="stat-value">{{ view.counts.cells }}</div><div class="stat-desc">Local cells</div></div>
-        <div class="stat"><div class="stat-title">Villages</div><div class="stat-value">{{ view.counts.villages }}</div><div class="stat-desc">Searchable leaf records</div></div>
-      </section>
+      {% block filters %}{% endblock %}
 
-      {% block content %}{% endblock %}
+      <section id="performance-dashboard" class="scroll-mt-24 rounded-2xl border border-base-300 bg-base-100 shadow-xl shadow-black/5" aria-labelledby="performance-title">
+        <header class="flex flex-col gap-4 border-b border-base-300 p-5 sm:flex-row sm:items-center sm:justify-between lg:p-6">
+          <div>
+            <p class="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary">Live comparison</p>
+            <h2 id="performance-title" class="text-xl font-bold sm:text-2xl">Server performance dashboard</h2>
+            <p class="mt-1 text-sm leading-6 text-base-content/60">Smaller responses and fewer full-document browser updates are the practical HTMX advantages to watch.</p>
+          </div>
+          <a class="btn btn-ghost btn-sm gap-2 self-start" href="/metrics" target="_blank" rel="noopener">
+            Metrics JSON
+            <svg class="app-icon size-3.5" aria-hidden="true"><use href="/static/icons/solid.svg#arrow-up-right-from-square"></use></svg>
+          </a>
+        </header>
 
-      <section class="card border border-base-300 bg-base-100 shadow-sm">
-        <div class="card-body gap-4 p-4 sm:p-6">
-          <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-            <div>
-              <h2 class="card-title">Recent server performance</h2>
-              <p class="text-sm text-base-content/60">In-memory measurements captured by Actix middleware. Refresh this page to update the summary.</p>
+        <div class="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4 lg:p-6">
+          <article class="card border border-base-300 bg-base-200/50"><div class="card-body gap-2 p-4"><div class="flex items-center justify-between text-base-content/50"><span class="text-sm font-medium">Total requests</span><svg class="app-icon"><use href="/static/icons/solid.svg#database"></use></svg></div><p class="text-3xl font-black tabular-nums">{{ view.metrics.requests }}</p><p class="text-xs text-base-content/50">Current in-memory session</p></div></article>
+          <article class="card border border-teal-400/25 bg-teal-400/5"><div class="card-body gap-2 p-4"><div class="flex items-center justify-between text-teal-400"><span class="text-sm font-medium">Average HTMX time</span><span class="size-2 rounded-full bg-teal-400"></span></div><p class="text-3xl font-black tabular-nums text-teal-400">{{ view.metrics.htmx_average_duration_ms }}</p><p class="text-xs text-base-content/50">Fragment server processing</p></div></article>
+          <article class="card border border-pink-400/25 bg-pink-400/5"><div class="card-body gap-2 p-4"><div class="flex items-center justify-between text-pink-400"><span class="text-sm font-medium">Average full-page time</span><span class="size-2 rounded-full bg-pink-400"></span></div><p class="text-3xl font-black tabular-nums text-pink-400">{{ view.metrics.traditional_average_duration_ms }}</p><p class="text-xs text-base-content/50">Complete document processing</p></div></article>
+          <article class="card border border-primary/25 bg-primary/5"><div class="card-body gap-2 p-4"><div class="flex items-center justify-between text-primary"><span class="text-sm font-medium">Average response size</span><svg class="app-icon"><use href="/static/icons/solid.svg#hard-drive"></use></svg></div><p class="text-3xl font-black tabular-nums text-primary">{{ view.metrics.average_response_size }}</p><p class="text-xs text-base-content/50">Across measured responses</p></div></article>
+        </div>
+
+        <div class="grid gap-5 px-5 pb-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-6 lg:pb-6">
+          <div class="rounded-xl border border-base-300 bg-base-200/35 p-4 sm:p-5" aria-label="HTMX and traditional comparison chart">
+            <div class="mb-5 flex items-center justify-between gap-3"><h3 class="font-bold">Relative comparison</h3><span class="text-xs text-base-content/45">Longer bar = larger value</span></div>
+            <div class="space-y-5">
+              <div>
+                <div class="mb-2 flex items-center justify-between text-sm"><span class="font-semibold">Server time</span><span class="text-base-content/45">lower is better</span></div>
+                <div class="space-y-2">
+                  <div class="grid grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] items-center gap-3"><span class="text-sm font-medium text-teal-400">HTMX</span><div class="h-2.5 overflow-hidden rounded-full bg-base-300"><div class="h-full rounded-full bg-teal-400" style="width: {{ view.metrics.htmx_time_bar_width }}%"></div></div><span class="metric-value text-right">{{ view.metrics.htmx_average_duration_ms }}</span></div>
+                  <div class="grid grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] items-center gap-3"><span class="text-sm font-medium text-pink-400">Traditional</span><div class="h-2.5 overflow-hidden rounded-full bg-base-300"><div class="h-full rounded-full bg-pink-400" style="width: {{ view.metrics.traditional_time_bar_width }}%"></div></div><span class="metric-value text-right">{{ view.metrics.traditional_average_duration_ms }}</span></div>
+                </div>
+              </div>
+              <div>
+                <div class="mb-2 flex items-center justify-between text-sm"><span class="font-semibold">Response size</span><span class="text-base-content/45">lower is better</span></div>
+                <div class="space-y-2">
+                  <div class="grid grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] items-center gap-3"><span class="text-sm font-medium text-teal-400">HTMX</span><div class="h-2.5 overflow-hidden rounded-full bg-base-300"><div class="h-full rounded-full bg-teal-400" style="width: {{ view.metrics.htmx_size_bar_width }}%"></div></div><span class="metric-value text-right">{{ view.metrics.htmx_average_response_size }}</span></div>
+                  <div class="grid grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] items-center gap-3"><span class="text-sm font-medium text-pink-400">Traditional</span><div class="h-2.5 overflow-hidden rounded-full bg-base-300"><div class="h-full rounded-full bg-pink-400" style="width: {{ view.metrics.traditional_size_bar_width }}%"></div></div><span class="metric-value text-right">{{ view.metrics.traditional_average_response_size }}</span></div>
+                </div>
+              </div>
             </div>
-            <a class="btn btn-outline btn-sm" href="/metrics" target="_blank">Open metrics JSON</a>
           </div>
-          <div class="stats stats-vertical border border-base-300 bg-base-200 lg:stats-horizontal">
-            <div class="stat py-3"><div class="stat-title">Recorded requests</div><div class="stat-value text-2xl">{{ view.metrics.requests }}</div></div>
-            <div class="stat py-3"><div class="stat-title">Overall server avg</div><div class="stat-value text-2xl">{{ view.metrics.average_duration_ms }}</div></div>
-            <div class="stat py-3"><div class="stat-title">HTMX server avg</div><div class="stat-value text-2xl text-primary">{{ view.metrics.htmx_average_duration_ms }}</div></div>
-            <div class="stat py-3"><div class="stat-title">Full-page server avg</div><div class="stat-value text-2xl text-secondary">{{ view.metrics.traditional_average_duration_ms }}</div></div>
-            <div class="stat py-3"><div class="stat-title">Average response</div><div class="stat-value text-2xl">{{ view.metrics.average_response_size }}</div></div>
-          </div>
-          <div class="overflow-x-auto rounded-box border border-base-300">
-            <table class="table table-sm">
-              <thead><tr><th>Timestamp (UTC)</th><th>Mode</th><th>Request</th><th>Status</th><th>Server time</th><th>Response</th></tr></thead>
-              <tbody>
-              {% for record in view.metrics.recent %}
-                <tr class="hover:bg-base-200">
-                  <td class="whitespace-nowrap font-mono text-xs">{{ record.timestamp }}</td>
-                  <td><span class="badge {% if record.mode == "HTMX" %}badge-primary{% else %}badge-secondary{% endif %} badge-sm">{{ record.mode }}</span></td>
-                  <td class="max-w-md"><span class="font-mono text-xs">{{ record.method }} {{ record.path }}</span></td>
-                  <td>{{ record.status }}</td>
-                  <td class="metric-value">{{ record.duration_ms }}</td>
-                  <td class="metric-value">{{ record.response_size }}</td>
-                </tr>
-              {% else %}
-                <tr><td colspan="6" class="py-8 text-center text-base-content/55">No completed requests were available when this page started rendering.</td></tr>
-              {% endfor %}
-              </tbody>
-            </table>
-          </div>
+          <aside class="alert items-start border border-primary/20 bg-primary/5 text-sm leading-6">
+            <svg class="app-icon mt-1 text-primary" aria-hidden="true"><use href="/static/icons/solid.svg#circle-info"></use></svg>
+            <div><h3 class="font-bold text-base-content">Read the comparison carefully</h3><p class="mt-1 text-base-content/65">HTMX does not make Rust rendering inherently faster. It reduces transferred HTML and limits browser updates to the region that changed.</p></div>
+          </aside>
         </div>
+
+        <details class="collapse-arrow collapse border-t border-base-300 rounded-none">
+          <summary class="collapse-title flex min-h-14 items-center gap-2 px-5 text-base font-semibold lg:px-6"><svg class="app-icon text-base-content/45"><use href="/static/icons/solid.svg#file-lines"></use></svg>Request log <span class="badge badge-ghost badge-sm">latest {{ view.metrics.recent.len() }}</span></summary>
+          <div class="collapse-content px-5 pb-5 lg:px-6 lg:pb-6">
+            <div class="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <p class="text-sm text-base-content/55">Filter the recent in-memory requests by rendering mode.</p>
+              <div class="join" role="group" aria-label="Filter request log">
+                <button type="button" class="metric-filter-btn btn btn-active join-item btn-sm" data-mode="all" aria-pressed="true" onclick="setMetricFilter('all')">All</button>
+                <button type="button" class="metric-filter-btn btn join-item btn-sm" data-mode="htmx" aria-pressed="false" onclick="setMetricFilter('htmx')"><span class="size-2 rounded-full bg-teal-400"></span>HTMX</button>
+                <button type="button" class="metric-filter-btn btn join-item btn-sm" data-mode="traditional" aria-pressed="false" onclick="setMetricFilter('traditional')"><span class="size-2 rounded-full bg-pink-400"></span>Traditional</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-base-300">
+              <table class="table">
+                <thead><tr><th>Time (UTC)</th><th>Mode</th><th>Request</th><th>Status</th><th class="text-right">Server time</th><th class="text-right">Response</th></tr></thead>
+                <tbody>
+                {% for record in view.metrics.recent %}
+                  <tr class="metric-row hover:bg-base-200/70" data-metric-mode="{% if record.mode == "HTMX" %}htmx{% else %}traditional{% endif %}">
+                    <td class="whitespace-nowrap font-mono text-xs text-base-content/55">{{ record.timestamp }}</td>
+                    <td><span class="badge badge-sm border-0 {% if record.mode == "HTMX" %}bg-teal-400/15 text-teal-300{% else %}bg-pink-400/15 text-pink-300{% endif %}">{{ record.mode }}</span></td>
+                    <td class="min-w-64"><span class="font-mono text-xs"><span class="font-bold text-base-content/55">{{ record.method }}</span> {{ record.path }}</span></td>
+                    <td><span class="badge badge-sm {% if record.status < 400 %}badge-success badge-outline{% else %}badge-warning badge-outline{% endif %}">{{ record.status }}</span></td>
+                    <td class="metric-value text-right">{{ record.duration_ms }}</td>
+                    <td class="metric-value text-right">{{ record.response_size }}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="6" class="py-10 text-center text-base-content/50">Request data will appear after the first completed interaction.</td></tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </section>
+
+      {% block results %}{% endblock %}
     </main>
   </div>
 
-  <dialog id="location-modal" class="modal">
-    <div id="location-modal-content" class="modal-box max-w-2xl border border-base-300 p-0">
-      {% if view.show_detail %}{{ view.detail_html|safe }}{% else %}<div class="p-8 text-center"><span class="loading loading-spinner loading-lg text-primary"></span></div>{% endif %}
+  <dialog id="location-modal" class="modal detail-drawer" aria-labelledby="location-detail-title">
+    <div id="location-modal-content" class="modal-box border-l border-base-300 bg-base-100 p-0 shadow-2xl">
+      {% if view.show_detail %}{{ view.detail_html|safe }}{% else %}<div class="grid h-full place-items-center p-8"><span class="loading loading-spinner loading-lg text-primary" role="status" aria-label="Loading location details"></span></div>{% endif %}
     </div>
-    <form method="dialog" class="modal-backdrop"><button aria-label="Close location details">close</button></form>
+    <form method="dialog" class="modal-backdrop"><button aria-label="Close location details panel">Close</button></form>
   </dialog>
 
   <script>
     const root = document.documentElement;
     const themeToggle = document.getElementById("theme-toggle");
-    themeToggle.checked = root.dataset.theme === "dark";
+    themeToggle.checked = root.dataset.theme === "light";
     themeToggle.addEventListener("change", () => {
-      const theme = themeToggle.checked ? "dark" : "light";
+      const theme = themeToggle.checked ? "light" : "dark";
       root.dataset.theme = theme;
       localStorage.setItem("rwanda-theme", theme);
     });
@@ -138,8 +194,82 @@
         if (select) select.innerHTML = `<option value="">All ${select.dataset.level}</option>`;
       });
     }
+
+    function clearFilter(name, dependentIds, useHtmx) {
+      const form = document.getElementById("filters-form");
+      const control = form?.elements.namedItem(name);
+      if (control) control.value = "";
+      resetCascade(dependentIds || []);
+      syncActiveFilters();
+      if (useHtmx) {
+        htmx.trigger(document.getElementById("search-input"), "filtersChanged");
+      } else {
+        form?.requestSubmit();
+      }
+    }
+
+    function syncActiveFilters() {
+      const container = document.getElementById("active-filter-chips");
+      const form = document.getElementById("filters-form");
+      if (!container || !form) return;
+      container.querySelectorAll("[data-active-filter]").forEach((element) => element.remove());
+      const definitions = [
+        { name: "query", label: "Search: ", dependents: [] },
+        { name: "province", label: "", dependents: ["district", "sector", "cell", "village"] },
+        { name: "district", label: "", dependents: ["sector", "cell", "village"] },
+        { name: "sector", label: "", dependents: ["cell", "village"] },
+        { name: "cell", label: "", dependents: ["village"] },
+        { name: "village", label: "", dependents: [] },
+      ];
+      const useHtmx = container.dataset.useHtmx === "true";
+      let activeCount = 0;
+      definitions.forEach((definition) => {
+        const control = form.elements.namedItem(definition.name);
+        const value = control?.value?.trim();
+        if (!value) return;
+        activeCount += 1;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.activeFilter = "";
+        button.className = definition.name === "query" ? "badge badge-lg gap-2 border-primary/30 bg-primary/10 text-primary" : "badge badge-lg gap-2 badge-outline";
+        button.setAttribute("aria-label", `Remove ${definition.name} filter`);
+        const text = document.createElement("span");
+        text.textContent = `${definition.label}${value}`;
+        const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        icon.setAttribute("class", "app-icon size-3");
+        icon.setAttribute("aria-hidden", "true");
+        const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        use.setAttribute("href", "/static/icons/solid.svg#xmark");
+        icon.appendChild(use);
+        button.append(text, icon);
+        button.addEventListener("click", () => clearFilter(definition.name, definition.dependents, useHtmx));
+        container.appendChild(button);
+      });
+      if (activeCount === 0) {
+        const empty = document.createElement("span");
+        empty.dataset.activeFilter = "";
+        empty.className = "text-sm text-base-content/45";
+        empty.textContent = "No filters applied";
+        container.appendChild(empty);
+      }
+    }
+
+    function setMetricFilter(mode) {
+      document.querySelectorAll(".metric-row").forEach((row) => {
+        row.hidden = mode !== "all" && row.dataset.metricMode !== mode;
+      });
+      document.querySelectorAll(".metric-filter-btn").forEach((button) => {
+        const selected = button.dataset.mode === mode;
+        button.classList.toggle("btn-active", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+    }
+
+    const filterForm = document.getElementById("filters-form");
+    syncActiveFilters();
+    filterForm?.addEventListener("input", syncActiveFilters);
+    filterForm?.addEventListener("change", () => requestAnimationFrame(syncActiveFilters));
   </script>
   {% if view.show_detail %}<script>document.getElementById("location-modal").showModal();</script>{% endif %}
 </body>
 </html>
-

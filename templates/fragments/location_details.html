@@ -1,22 +1,45 @@
-<div class="border-b border-base-300 bg-primary p-6 text-primary-content">
+<header class="sticky top-0 z-10 border-b border-base-300 bg-base-100/95 p-5 backdrop-blur sm:p-6">
   <div class="flex items-start justify-between gap-4">
-    <div><span class="badge badge-ghost badge-sm mb-2">{{ detail.location.id }}</span><h2 class="text-xl font-black">{{ detail.location.village }}</h2><p class="mt-1 text-sm opacity-80">Terminal village record</p></div>
-    <form method="dialog"><button class="btn btn-circle btn-ghost btn-sm" aria-label="Close">✕</button></form>
+    <div class="flex min-w-0 items-start gap-3">
+      <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><svg class="app-icon size-5" aria-hidden="true"><use href="/static/icons/solid.svg#location-dot"></use></svg></span>
+      <div class="min-w-0"><p class="text-xs font-bold uppercase tracking-[0.14em] text-primary">Village record</p><h2 id="location-detail-title" class="mt-1 truncate text-2xl font-black tracking-tight">{{ detail.location.village }}</h2><p class="mt-1 font-mono text-xs text-base-content/45">{{ detail.location.id }}</p></div>
+    </div>
+    <form method="dialog"><button class="btn btn-circle btn-ghost min-h-11 min-w-11" aria-label="Close location details" autofocus><svg class="app-icon size-5" aria-hidden="true"><use href="/static/icons/solid.svg#xmark"></use></svg></button></form>
   </div>
+</header>
+
+<div class="space-y-6 p-5 sm:p-6">
+  <section aria-labelledby="hierarchy-heading">
+    <h3 id="hierarchy-heading" class="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/50">Hierarchy path</h3>
+    <nav class="breadcrumbs overflow-x-auto rounded-xl border border-base-300 bg-base-200/45 px-4 py-3 text-sm" aria-label="Selected location hierarchy"><ul><li>{{ detail.location.province }}</li><li>{{ detail.location.district }}</li><li>{{ detail.location.sector }}</li><li>{{ detail.location.cell }}</li><li class="font-bold text-primary">{{ detail.location.village }}</li></ul></nav>
+  </section>
+
+  <section class="grid grid-cols-2 gap-3" aria-label="Location metadata">
+    <div class="rounded-xl border border-base-300 bg-base-200/35 p-4"><div class="flex items-center gap-2 text-base-content/45"><svg class="app-icon"><use href="/static/icons/solid.svg#layer-group"></use></svg><span class="text-xs font-bold uppercase tracking-wider">Depth</span></div><p class="mt-2 text-xl font-black">5 levels</p><p class="mt-1 text-xs text-base-content/50">Terminal hierarchy level</p></div>
+    <div class="rounded-xl border border-base-300 bg-base-200/35 p-4"><div class="flex items-center gap-2 text-base-content/45"><svg class="app-icon"><use href="/static/icons/solid.svg#table-cells-large"></use></svg><span class="text-xs font-bold uppercase tracking-wider">Parent</span></div><p class="mt-2 truncate text-xl font-black">{{ detail.location.cell }}</p><p class="mt-1 text-xs text-base-content/50">Cell</p></div>
+  </section>
+
+  <section aria-labelledby="administrative-heading">
+    <h3 id="administrative-heading" class="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/50">Administrative record</h3>
+    <dl class="divide-y divide-base-300 overflow-hidden rounded-xl border border-base-300">
+      <div class="grid grid-cols-[7rem_1fr] gap-4 px-4 py-3"><dt class="text-sm text-base-content/50">Province</dt><dd class="text-right font-semibold">{{ detail.location.province }}</dd></div>
+      <div class="grid grid-cols-[7rem_1fr] gap-4 px-4 py-3"><dt class="text-sm text-base-content/50">District</dt><dd class="text-right font-semibold">{{ detail.location.district }}</dd></div>
+      <div class="grid grid-cols-[7rem_1fr] gap-4 px-4 py-3"><dt class="text-sm text-base-content/50">Sector</dt><dd class="text-right font-semibold">{{ detail.location.sector }}</dd></div>
+      <div class="grid grid-cols-[7rem_1fr] gap-4 px-4 py-3"><dt class="text-sm text-base-content/50">Cell</dt><dd class="text-right font-semibold">{{ detail.location.cell }}</dd></div>
+      <div class="grid grid-cols-[7rem_1fr] gap-4 bg-primary/5 px-4 py-3"><dt class="text-sm text-base-content/50">Village</dt><dd class="text-right font-bold text-primary">{{ detail.location.village }}</dd></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="children-heading">
+    <div class="mb-3 flex items-center justify-between gap-3"><h3 id="children-heading" class="text-sm font-bold uppercase tracking-wider text-base-content/50">Child locations</h3><span class="badge badge-ghost">0 available</span></div>
+    <div class="alert border border-base-300 bg-base-200/35 text-sm"><svg class="app-icon text-base-content/45"><use href="/static/icons/solid.svg#circle-info"></use></svg><span>Villages are the final level in this dataset, so this location has no child records.</span></div>
+  </section>
+
+  <section aria-labelledby="nearby-heading">
+    <h3 id="nearby-heading" class="mb-1 text-sm font-bold uppercase tracking-wider text-base-content/50">Villages in {{ detail.location.cell }} cell</h3>
+    <p class="mb-3 text-sm text-base-content/50">Peer locations that share the same parent cell.</p>
+    <div class="flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded-xl border border-base-300 bg-base-200/25 p-3">{% for village in detail.sibling_villages %}<span class="badge badge-lg badge-outline">{{ village }}</span>{% endfor %}</div>
+  </section>
 </div>
-<div class="space-y-5 p-6">
-  <div class="breadcrumbs overflow-x-auto text-sm"><ul><li>{{ detail.location.province }}</li><li>{{ detail.location.district }}</li><li>{{ detail.location.sector }}</li><li>{{ detail.location.cell }}</li><li class="font-bold">{{ detail.location.village }}</li></ul></div>
-  <dl class="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-3 text-sm">
-    <dt class="text-base-content/55">Province</dt><dd class="font-semibold">{{ detail.location.province }}</dd>
-    <dt class="text-base-content/55">District</dt><dd class="font-semibold">{{ detail.location.district }}</dd>
-    <dt class="text-base-content/55">Sector</dt><dd class="font-semibold">{{ detail.location.sector }}</dd>
-    <dt class="text-base-content/55">Cell</dt><dd class="font-semibold">{{ detail.location.cell }}</dd>
-    <dt class="text-base-content/55">Village</dt><dd class="font-semibold">{{ detail.location.village }}</dd>
-  </dl>
-  <div>
-    <h3 class="mb-2 font-bold">Villages in the same cell</h3>
-    <div class="flex flex-wrap gap-2"><span class="badge badge-primary">Selected: {{ detail.location.village }}</span>{% for village in detail.sibling_villages %}<span class="badge badge-outline">{{ village }}</span>{% endfor %}</div>
-    <p class="mt-3 text-xs text-base-content/55">A village is the final hierarchy level, so sibling villages are shown for local context.</p>
-  </div>
-  <form method="dialog"><button class="btn btn-block">Close details</button></form>
-</div>
+
+<footer class="sticky bottom-0 border-t border-base-300 bg-base-100/95 p-5 backdrop-blur sm:p-6"><form method="dialog"><button class="btn btn-primary min-h-11 w-full">Close details</button></form></footer>

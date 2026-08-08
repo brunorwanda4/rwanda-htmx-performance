@@ -1,69 +1,91 @@
 {% extends "base.html" %}
 
-{% block content %}
-<section class="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
-  <aside class="card h-fit border border-base-300 bg-base-100 shadow-sm xl:sticky xl:top-24">
-    <form id="filters-form" class="card-body gap-4 p-4 sm:p-6" autocomplete="off">
+{% block filters %}
+<section class="card border border-base-300 bg-base-100 shadow-xl shadow-black/5" aria-labelledby="filter-heading">
+  <form id="filters-form" class="card-body gap-5 p-5 lg:p-6" autocomplete="off">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 class="card-title">Search and filters</h2>
-        <p class="mt-1 text-sm text-base-content/60">Each interaction requests only the section that changes.</p>
+        <h2 id="filter-heading" class="flex items-center gap-2 text-xl font-bold"><svg class="app-icon text-primary" aria-hidden="true"><use href="/static/icons/solid.svg#sliders"></use></svg>Find a location</h2>
+        <p id="filter-help" class="mt-1 text-sm leading-6 text-base-content/60">Results update without a page reload in HTMX mode. Choose any level to narrow the hierarchy.</p>
       </div>
+      <a href="/" class="btn btn-outline btn-sm gap-2 self-start"><svg class="app-icon size-3.5" aria-hidden="true"><use href="/static/icons/solid.svg#xmark"></use></svg>Clear filters</a>
+    </header>
 
-      <label class="form-control w-full">
-        <span class="label-text mb-2 font-semibold">Search every hierarchy level</span>
-        <input id="search-input" class="input input-bordered w-full" type="search" name="query" value="{{ view.query.query }}" placeholder="Try Kigali, Gitega, Gihanga…"
-          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form"
-          hx-trigger="keyup changed delay:300ms, filtersChanged from:body" hx-indicator="#global-indicator">
-      </label>
+    <label class="form-control w-full">
+      <span class="label-text mb-2 text-sm font-semibold">Search all location levels</span>
+      <div class="relative">
+        <svg class="app-icon pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-base-content/40" aria-hidden="true"><use href="/static/icons/solid.svg#magnifying-glass"></use></svg>
+        <input id="search-input" class="input input-bordered input-lg w-full pl-11 text-base" type="search" name="query" value="{{ view.query.query }}" placeholder="Search a province, district, sector, cell, or village"
+          aria-describedby="filter-help" hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form"
+          hx-trigger="keyup changed delay:300ms, filtersChanged from:body" hx-indicator="#global-indicator,#results-loading">
+      </div>
+    </label>
 
-      <div class="divider my-0 text-xs text-base-content/45">CASCADE</div>
-
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Province</span>
-        <select id="province" data-level="provinces" class="select select-bordered w-full" name="province"
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Province</span>
+        <select id="province" data-level="provinces" class="select select-bordered w-full text-base" name="province"
           hx-get="/fragments/districts" hx-target="#district" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
           onchange="resetCascade(['district','sector','cell','village'])">
           <option value="">All provinces</option>{% for option in view.provinces %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
         </select>
       </label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">District</span>
-        <select id="district" data-level="districts" class="select select-bordered w-full" name="district"
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">District</span>
+        <select id="district" data-level="districts" class="select select-bordered w-full text-base" name="district"
           hx-get="/fragments/sectors" hx-target="#sector" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
           onchange="resetCascade(['sector','cell','village'])">
           <option value="">All districts</option>{% for option in view.districts %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
         </select>
       </label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Sector</span>
-        <select id="sector" data-level="sectors" class="select select-bordered w-full" name="sector"
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Sector</span>
+        <select id="sector" data-level="sectors" class="select select-bordered w-full text-base" name="sector"
           hx-get="/fragments/cells" hx-target="#cell" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
           onchange="resetCascade(['cell','village'])">
           <option value="">All sectors</option>{% for option in view.sectors %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
         </select>
       </label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Cell</span>
-        <select id="cell" data-level="cells" class="select select-bordered w-full" name="cell"
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Cell</span>
+        <select id="cell" data-level="cells" class="select select-bordered w-full text-base" name="cell"
           hx-get="/fragments/villages" hx-target="#village" hx-swap="innerHTML" hx-include="#filters-form" hx-indicator="#global-indicator"
           onchange="resetCascade(['village'])">
           <option value="">All cells</option>{% for option in view.cells %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
         </select>
       </label>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Village</span>
-        <select id="village" data-level="villages" class="select select-bordered w-full" name="village"
-          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-trigger="change" hx-indicator="#global-indicator">
+      <label class="form-control"><span class="label-text mb-2 text-sm font-semibold">Village</span>
+        <select id="village" data-level="villages" class="select select-bordered w-full text-base" name="village"
+          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-trigger="change" hx-indicator="#global-indicator,#results-loading">
           <option value="">All villages</option>{% for option in view.villages %}<option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.value }}</option>{% endfor %}
         </select>
       </label>
+    </div>
 
-      <div class="divider my-0 text-xs text-base-content/45">TEST CONTROL</div>
-      <label class="form-control"><span class="label-text mb-2 font-semibold">Simulated delay (ms)</span>
-        <input class="input input-bordered" type="number" name="delay_ms" min="0" max="10000" value="{{ view.query.delay_ms }}"
-          hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-trigger="change" hx-indicator="#global-indicator">
-      </label>
-      <input type="hidden" name="per_page" value="{{ view.query.per_page }}">
-      <a href="/" class="btn btn-ghost btn-sm">Clear all filters</a>
-    </form>
-  </aside>
+    <div class="flex flex-col gap-4 border-t border-base-300 pt-4 lg:flex-row lg:items-start lg:justify-between">
+      <div id="active-filter-chips" data-use-htmx="true" class="flex min-h-9 flex-wrap items-center gap-2" aria-label="Active filters">
+        <span class="mr-1 text-xs font-bold uppercase tracking-wider text-base-content/45">Active</span>
+        {% if view.query.query != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 border-primary/30 bg-primary/10 text-primary" onclick="clearFilter('query', [], true)" aria-label="Remove search filter">Search: {{ view.query.query }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.province != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('province', ['district','sector','cell','village'], true)" aria-label="Remove province filter">{{ view.query.province }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.district != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('district', ['sector','cell','village'], true)" aria-label="Remove district filter">{{ view.query.district }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.sector != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('sector', ['cell','village'], true)" aria-label="Remove sector filter">{{ view.query.sector }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.cell != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('cell', ['village'], true)" aria-label="Remove cell filter">{{ view.query.cell }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.village != "" %}<button data-active-filter type="button" class="badge badge-lg gap-2 badge-outline" onclick="clearFilter('village', [], true)" aria-label="Remove village filter">{{ view.query.village }}<svg class="app-icon size-3"><use href="/static/icons/solid.svg#xmark"></use></svg></button>{% endif %}
+        {% if view.query.query == "" && view.query.province == "" && view.query.district == "" && view.query.sector == "" && view.query.cell == "" && view.query.village == "" %}<span data-active-filter class="text-sm text-base-content/45">No filters applied</span>{% endif %}
+      </div>
 
-  <div id="results" class="min-w-0" aria-live="polite">{{ view.results_html|safe }}</div>
+      <details class="collapse-arrow collapse w-full shrink-0 border border-base-300 bg-base-200/40 lg:w-80">
+        <summary class="collapse-title min-h-11 py-3 text-sm font-semibold"><span class="inline-flex items-center gap-2"><svg class="app-icon text-base-content/45"><use href="/static/icons/solid.svg#clock"></use></svg>Performance test controls</span></summary>
+        <div class="collapse-content pb-4">
+          <label class="form-control"><span class="label-text mb-2 text-sm">Simulated server delay (ms)</span>
+            <input class="input input-bordered w-full" type="number" name="delay_ms" min="0" max="10000" value="{{ view.query.delay_ms }}"
+              hx-get="/fragments/locations" hx-target="#results" hx-swap="innerHTML" hx-include="#filters-form" hx-trigger="change" hx-indicator="#global-indicator,#results-loading">
+          </label>
+          <p class="mt-2 text-xs leading-5 text-base-content/50">Adds up to 10 seconds of artificial server latency.</p>
+        </div>
+      </details>
+    </div>
+    <input type="hidden" name="per_page" value="{{ view.query.per_page }}">
+  </form>
 </section>
 {% endblock %}
 
+{% block results %}
+<div id="results" class="min-w-0 scroll-mt-24" aria-live="polite" aria-busy="false">{{ view.results_html|safe }}</div>
+{% endblock %}
