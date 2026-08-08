@@ -5,10 +5,11 @@
   "scripts": {
     "css:build": "bunx @tailwindcss/cli -i ./assets/input.css -o ./static/app.css --minify",
     "css:watch": "bunx @tailwindcss/cli -i ./assets/input.css -o ./static/app.css --watch",
-    "dev": "bun run css:watch"
+    "dev": "concurrently --kill-others-on-fail --names CSS,ACTIX --prefix-colors cyan,green \"bun run css:watch\" \"cargo run\""
   },
   "devDependencies": {
     "@tailwindcss/cli": "latest",
+    "concurrently": "latest",
     "daisyui": "latest",
     "tailwindcss": "latest"
   }

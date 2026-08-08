@@ -53,25 +53,27 @@ cargo run
 
 ## Development workflow
 
-Terminal 1 — rebuild CSS whenever templates or styles change:
-
-```bash
-bun run css:watch
-```
-
-`bun run dev` is an alias for the same CSS watcher:
+Start the complete development application with one command:
 
 ```bash
 bun run dev
 ```
 
-Terminal 2 — run the actual application server:
+This runs the Tailwind CSS watcher and the Actix Web server together. Open `http://127.0.0.1:4562`, and press `Ctrl+C` to stop both processes.
+
+If you only want to rebuild CSS while running Actix separately, use:
+
+```bash
+bun run css:watch
+```
+
+Then, in another terminal:
 
 ```bash
 cargo run
 ```
 
-Bun never serves the application. Actix remains the only HTTP server.
+Bun only orchestrates development tooling; Actix remains the actual HTTP application server.
 
 ## What to compare
 
