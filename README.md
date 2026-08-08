@@ -35,19 +35,19 @@ cargo run
 Open:
 
 ```text
-http://127.0.0.1:8080
+http://127.0.0.1:4562
 ```
 
-The default port is `8080`. If it is already occupied, override it without changing the benchmark application:
+The default port is `4562`. If it is already occupied, override it without changing the benchmark application:
 
 ```bash
-APP_PORT=18080 cargo run
+APP_PORT=4563 cargo run
 ```
 
 PowerShell:
 
 ```powershell
-$env:APP_PORT = "18080"
+$env:APP_PORT = "4563"
 cargo run
 ```
 
@@ -133,8 +133,8 @@ Performance events are emitted as structured JSON through `tracing`. The most re
 For a controlled latency comparison:
 
 ```text
-http://127.0.0.1:8080/locations?query=kigali&delay_ms=100
-http://127.0.0.1:8080/fragments/locations?query=kigali&delay_ms=100
+http://127.0.0.1:4562/locations?query=kigali&delay_ms=100
+http://127.0.0.1:4562/fragments/locations?query=kigali&delay_ms=100
 ```
 
 ## Load testing
@@ -151,23 +151,23 @@ cargo build --release
 Compare a full document with the equivalent result fragment:
 
 ```bash
-wrk -t4 -c50 -d30s "http://127.0.0.1:8080/locations?query=kigali"
+wrk -t4 -c50 -d30s "http://127.0.0.1:4562/locations?query=kigali"
 
-wrk -t4 -c50 -d30s -H "HX-Request: true" "http://127.0.0.1:8080/fragments/locations?query=kigali"
+wrk -t4 -c50 -d30s -H "HX-Request: true" "http://127.0.0.1:4562/fragments/locations?query=kigali"
 ```
 
 Repeat with simulated application work:
 
 ```bash
-wrk -t4 -c50 -d30s "http://127.0.0.1:8080/locations?query=kigali&delay_ms=25"
-wrk -t4 -c50 -d30s -H "HX-Request: true" "http://127.0.0.1:8080/fragments/locations?query=kigali&delay_ms=25"
+wrk -t4 -c50 -d30s "http://127.0.0.1:4562/locations?query=kigali&delay_ms=25"
+wrk -t4 -c50 -d30s -H "HX-Request: true" "http://127.0.0.1:4562/fragments/locations?query=kigali&delay_ms=25"
 ```
 
 ### hey
 
 ```bash
-hey -z 30s -c 50 "http://127.0.0.1:8080/locations?query=kigali"
-hey -z 30s -c 50 -H "HX-Request: true" "http://127.0.0.1:8080/fragments/locations?query=kigali"
+hey -z 30s -c 50 "http://127.0.0.1:4562/locations?query=kigali"
+hey -z 30s -c 50 -H "HX-Request: true" "http://127.0.0.1:4562/fragments/locations?query=kigali"
 ```
 
 ### k6
@@ -189,7 +189,7 @@ export default function () {
   const path = isHtmx
     ? "/fragments/locations?query=kigali"
     : "/locations?query=kigali";
-  const response = http.get(`http://127.0.0.1:8080${path}`, {
+  const response = http.get(`http://127.0.0.1:4562${path}`, {
     headers: isHtmx ? { "HX-Request": "true" } : {},
   });
   check(response, { "status is 200": (r) => r.status === 200 });
@@ -259,4 +259,3 @@ rwanda-htmx-performance/
 └── static/
     └── app.css
 ```
-

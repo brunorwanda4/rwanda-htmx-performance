@@ -29,7 +29,7 @@ async fn main() -> io::Result<()> {
     let port = env::var("APP_PORT")
         .ok()
         .and_then(|value| value.parse::<u16>().ok())
-        .unwrap_or(8080);
+        .unwrap_or(4562);
     let address = ("127.0.0.1", port);
     let public_address = format!("http://127.0.0.1:{port}");
 
